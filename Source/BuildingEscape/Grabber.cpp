@@ -1,6 +1,7 @@
 // Copyright Cyle Ven Dawson 2019
 
 
+#include "Components/PrimitiveComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
@@ -30,11 +31,7 @@ void UGrabber::BindPhysicsHandleComponent()
 
 	PhysicsHandle = Actor->FindComponentByClass<UPhysicsHandleComponent>();
 
-	if (PhysicsHandle)
-	{
-
-	}
-	else
+	if (PhysicsHandle == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Could not find Physics Handle for %s"), *(Actor->GetName()))
 	}
@@ -68,10 +65,8 @@ void UGrabber::BindInputComponent()
 	}
 }
 
-void UGrabber::Grab()
+FTwoVectors UGrabber::GetReachVectors()
 {
-	// Calculate reach
-
 	FVector	PlayerLocation;
 	FRotator PlayerRotator;
 
@@ -82,14 +77,26 @@ void UGrabber::Grab()
 
 	FVector GrabEnd = PlayerLocation + PlayerRotator.Vector() * Reach;
 
+	return FTwoVectors(
+		PlayerLocation,
+		GrabEnd
+	);
+}
+
+void UGrabber::Grab()
+{
+	// Calculate reach
+
+	FTwoVectors ReachVectors = GetReachVectors();
+
 	// Find an object to grab
 
 	FHitResult Hit;
 
 	GetWorld()->LineTraceSingleByObjectType(
 		Hit,
-		PlayerLocation,
-		GrabEnd,
+		ReachVectors.v1,
+		ReachVectors.v2,
 		FCollisionObjectQueryParams(
 			ECollisionChannel::ECC_PhysicsBody
 		),
@@ -104,26 +111,18 @@ void UGrabber::Grab()
 
 	if (HitActor)
 	{
-		GrabbedActor = HitActor;
-		UE_LOG(LogTemp, Warning, TEXT("Grabbing %s"), *(HitActor->GetName()))
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Nothing to grab"))
+		PhysicsHandle->GrabComponent(
+			Hit.GetComponent(),
+			NAME_None,
+			HitActor->GetActorLocation(),
+			true
+		);
 	}
 }
 
 void UGrabber::Release()
 {
-	if (GrabbedActor)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Releasing %s"), *(GrabbedActor->GetName()))
-		GrabbedActor = nullptr;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Nothing to release"))
-	}
+	PhysicsHandle->ReleaseComponent();
 }
 
 // Called every frame
@@ -131,4 +130,14 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	UPrimitiveComponent* GrabbedComponent = PhysicsHandle->GetGrabbedComponent();
+
+	if (GrabbedComponent)
+	{
+		// Move the GrabbedComponent to its new home
+
+		PhysicsHandle->SetTargetLocation(
+			GetReachVectors().v2
+		);
+	}
 }

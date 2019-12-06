@@ -29,17 +29,17 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere)
-	uint8 Reach = 50;
+	uint8 Reach = 100;
 
 	UPhysicsHandleComponent* PhysicsHandle = nullptr;
 
 	UInputComponent* Input = nullptr;
 
-	AActor* GrabbedActor = nullptr;
-
 	void BindPhysicsHandleComponent();
 
 	void BindInputComponent();
+
+	FTwoVectors GetReachVectors();
 
 	void Grab();
 
