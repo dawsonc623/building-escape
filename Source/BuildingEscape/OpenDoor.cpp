@@ -1,6 +1,7 @@
 // Copyright Cyle Ven Dawson 2019
 
 
+#include "Components/PrimitiveComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/PlayerController.h"
@@ -16,15 +17,29 @@ UOpenDoor::UOpenDoor()
 	// ...
 }
 
-
 // Called when the game starts
 void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
-
-	ActorThatOpens = GetWorld()->GetFirstPlayerController()->GetPawn();
 }
 
+float UOpenDoor::GetMassOnPlate()
+{
+	float TotalMass = 0.0f;
+
+	TArray<AActor*> OverlappingActors;
+
+	PressurePlate->GetOverlappingActors(
+		OverlappingActors
+	);
+
+	for (AActor* Actor : OverlappingActors)
+	{
+		TotalMass += Actor->FindComponentByClass<UPrimitiveComponent>()->GetMass();
+	}
+
+	return TotalMass;
+}
 
 // Called every frame
 void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -34,7 +49,7 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 	AActor* Door = GetOwner();
 	float CurrentTime = GetWorld()->GetTimeSeconds();
 
-	if (PressurePlate->IsOverlappingActor(ActorThatOpens))
+	if (GetMassOnPlate() >= 30)
 	{
 		Door->SetActorRotation(
 			FRotator(
@@ -46,6 +61,7 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 
 		LastDoorOpenTime = CurrentTime;
 	}
+	// TODO Do not close if the door is already closed
 	else if (CurrentTime - LastDoorOpenTime > CloseDoorDelay)
 	{
 		Door->SetActorRotation(

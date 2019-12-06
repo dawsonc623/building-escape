@@ -37,7 +37,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	float CloseDoorDelay = 0.75f;
 
-	AActor* ActorThatOpens;
-
 	float LastDoorOpenTime = 0.0f;
+
+	float GetMassOnPlate();
 };

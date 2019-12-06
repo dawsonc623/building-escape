@@ -28,7 +28,6 @@ public:
 
 
 private:
-	UPROPERTY(EditAnywhere)
 	uint8 Reach = 100;
 
 	UPhysicsHandleComponent* PhysicsHandle = nullptr;
