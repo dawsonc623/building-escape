@@ -85,44 +85,54 @@ FTwoVectors UGrabber::GetReachVectors()
 
 void UGrabber::Grab()
 {
-	// Calculate reach
-
-	FTwoVectors ReachVectors = GetReachVectors();
-
-	// Find an object to grab
-
-	FHitResult Hit;
-
-	GetWorld()->LineTraceSingleByObjectType(
-		Hit,
-		ReachVectors.v1,
-		ReachVectors.v2,
-		FCollisionObjectQueryParams(
-			ECollisionChannel::ECC_PhysicsBody
-		),
-		FCollisionQueryParams(
-			FName(TEXT("")),
-			false,
-			GetOwner()
-		)
-	);
-
-	AActor* HitActor = Hit.GetActor();
-
-	if (HitActor)
+	if (PhysicsHandle)
 	{
-		PhysicsHandle->GrabComponent(
-			Hit.GetComponent(),
-			NAME_None,
-			HitActor->GetActorLocation(),
-			true
+		// Calculate reach
+
+		FTwoVectors ReachVectors = GetReachVectors();
+
+		// Find an object to grab
+
+		FHitResult Hit;
+
+		GetWorld()->LineTraceSingleByObjectType(
+			Hit,
+			ReachVectors.v1,
+			ReachVectors.v2,
+			FCollisionObjectQueryParams(
+				ECollisionChannel::ECC_PhysicsBody
+			),
+			FCollisionQueryParams(
+				FName(TEXT("")),
+				false,
+				GetOwner()
+			)
 		);
+
+		AActor* HitActor = Hit.GetActor();
+
+		if (HitActor)
+		{
+			PhysicsHandle->GrabComponent(
+				Hit.GetComponent(),
+				NAME_None,
+				HitActor->GetActorLocation(),
+				true
+			);
+		}
 	}
+
+	return;
 }
 
 void UGrabber::Release()
 {
-	PhysicsHandle->ReleaseComponent();
+	if (PhysicsHandle)
+	{
+		PhysicsHandle->ReleaseComponent();
+	}
+
+	return;
 }
 
 // Called every frame
@@ -130,14 +140,17 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	UPrimitiveComponent* GrabbedComponent = PhysicsHandle->GetGrabbedComponent();
-
-	if (GrabbedComponent)
+	if (PhysicsHandle)
 	{
-		// Move the GrabbedComponent to its new home
+		UPrimitiveComponent* GrabbedComponent = PhysicsHandle->GetGrabbedComponent();
 
-		PhysicsHandle->SetTargetLocation(
-			GetReachVectors().v2
-		);
+		if (GrabbedComponent)
+		{
+			// Move the GrabbedComponent to its new home
+
+			PhysicsHandle->SetTargetLocation(
+				GetReachVectors().v2
+			);
+		}
 	}
 }
