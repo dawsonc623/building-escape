@@ -54,31 +54,20 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	AActor* Door = GetOwner();
-	float CurrentTime = GetWorld()->GetTimeSeconds();
-
-	if (GetMassOnPlate() >= 30)
+	if (GetMassOnPlate() >= TriggerMass)
 	{
-		Door->SetActorRotation(
-			FRotator(
-				0.0f,
-				OpenAngle,
-				0.0f
-			)
-		);
+		if (!DoorIsOpen)
+		{
+			OnOpenRequest.Broadcast();
 
-		LastDoorOpenTime = CurrentTime;
+			DoorIsOpen = true;
+		}
 	}
-	// TODO Do not close if the door is already closed
-	else if (CurrentTime - LastDoorOpenTime > CloseDoorDelay)
+	else if (DoorIsOpen)
 	{
-		Door->SetActorRotation(
-			FRotator(
-				0.0f,
-				0.0f,
-				0.0f
-			)
-		);
+		OnClose.Broadcast();
+
+		DoorIsOpen = false;
 	}
 }
 
